@@ -13,16 +13,22 @@ def start_server():
 
   clients = [] # Hold our clients in here
 
-  # Client Limiter ensure we only have 3 connections! Inform the user.
-  while len(clients) < MAX_CLIENTS:
-    client_socket, client_address = server.accept()
-    print(f"{client_address} has joined the game") # Debugging Purposes
-    clients.append(client_socket)
-    print(f"Server Capacity: {len(clients)}/{MAX_CLIENTS}") # Debugging Purposes
-
-  print("The server is now full!")
-
   while True:
+    # Accepts Clients if not FULL
+    if len(clients) < MAX_CLIENTS:
+      client_socket, client_address = server.accept()
+      print(f"{client_address} has joined the game") # Debugging Purposes
+      clients.append(client_socket)
+      print(f"Server Capacity: {len(clients)}/{MAX_CLIENTS}") # Debugging Purposes
+      client_socket.send("Welcome to the server!".encode('utf-8'))
+    # Declines Clients if FULL
+    else:
+      client_socket, client_address = server.accept()
+      print(f"Connection from {client_address} is denied because server is full.")
+      client_socket.send("Server is full. Please try again later.".encode('utf-8'))
+      client_socket.close()
+    
+    # Handle client commands!
     for client_socket in clients:
       try:
           data = client_socket.recv(1024).decode('utf-8')
