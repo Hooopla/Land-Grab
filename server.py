@@ -3,7 +3,7 @@ import socket
 # Server Information
 HOST_IP = '0.0.0.0'
 PORT = 12345
-MAX_CLIENTS = 3 
+MAX_CLIENTS = 2
 
 def start_server():
   server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,14 +28,14 @@ def start_server():
           data = client_socket.recv(1024).decode('utf-8')
           # If there is nothing left to be said from client disconnect
           if not data:
-            print("A player has left the game.")
+            print(f"{client_socket.getpeername()} left the game.")
             clients.remove(client_socket)
             client_socket.close()
           # Output the user's input
           else:
-            print(f"Received: {data}")
+            print(f"Received from {client_socket.getpeername()}: {data}")
       except ConnectionResetError:
-        print("[ERROR] A player has disconnected.")
+        print(f"[ERROR] {client_socket.getpeername()} left the game.")
         clients.remove(client_socket)
         client_socket.close()
 
