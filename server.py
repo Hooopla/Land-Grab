@@ -3,7 +3,7 @@ import socket
 # Server Information
 HOST_IP = '0.0.0.0'
 PORT = 12345
-MAX_CLIENTS = 2
+MAX_CLIENTS = 3
 
 def start_server():
   server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
