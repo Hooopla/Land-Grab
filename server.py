@@ -23,7 +23,7 @@ def start_server():
   print("The server is now full!")
 
   while True:
-    for client_Socket in clients:
+    for client_socket in clients:
       try:
           data = client_socket.recv(1024).decode('utf-8')
           # If there is nothing left to be said from client disconnect
