@@ -2,10 +2,17 @@
 import socket
 import keyboard
 import threading
+import pygame
 
 # Server Details
 SERVER_IP = '127.0.0.1'  # Only to connect to server if on the same machine!
 SERVER_PORT = 12345
+
+# Pygame Details
+screen = pygame.display.set_mode((1280, 720))
+pygame.display.set_caption("Client")
+running = True
+
 
 def send_data(client):
     while True:
@@ -60,5 +67,38 @@ def start_client():
     finally:
         client.close()
 
+
+test_packet = {
+    "TYPE": "UPDATE",
+    "PLAYERS": [
+        {"id": 1, "x": 100, "y": 200, "name": "Player1"},
+        {"id": 2, "x": 300, "y": 400, "name": "Player2"}
+    ]
+}
+
+def draw_players(update_packet):
+    
+    colours = ["red", "blue", "green", "purple", "orange"]
+
+    for player in update_packet["PLAYERS"]:
+        pygame.draw.circle(screen, colours[player["id"]], (player["x"], player["y"]), 25)
+
+
 if __name__ == "__main__":
     start_client()
+
+    # Pygame display loop (make its own function?)
+    while running:
+
+        screen.fill("black") # clear the screen
+
+        # Poll for events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        draw_players(test_packet)
+
+        pygame.display.update()
+
+    pygame.quit()
