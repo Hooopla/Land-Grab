@@ -41,15 +41,15 @@ def start_server():
             # Disconnect
             clients.remove(sock)
             sock.close()
-            print(f"{socket.getpeername()} has left the game.")
-            print_server_capacity(len(clients), MAX_CLIENTS)
+            print(f"{sock.getpeername()} has left the game.")
+            #print_server_capacity(len(clients), MAX_CLIENTS)
           else:
             print(f"Received from {sock.getpeername()}: {data}")
         except ConnectionResetError:
           clients.remove(sock)
           sock.close()
           print(f"[ERROR] {sock.getpeername()} left the game.")
-          print_server_capacity(len(clients), MAX_CLIENTS)
+          #print_server_capacity(len(clients), MAX_CLIENTS)
 
 if __name__ == "__main__":
     start_server()
