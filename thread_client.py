@@ -3,12 +3,14 @@ import socket
 import keyboard
 import threading
 import pygame
+import json
 
 # Server Details
 SERVER_IP = '127.0.0.1'  # Only to connect to server if on the same machine!
 SERVER_PORT = 12345
 
 # Pygame Details
+pygame.init()
 screen = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("Client")
 running = True
@@ -17,10 +19,34 @@ running = True
 def send_data(client):
     while True:
         # Send Keyboard inputs
+        keys = pygame.key.get_pressed()
+        direction = pygame.Vector2(0,0)
+        if keys[pygame.K_w]:
+            direction.y -= 1
+        if keys[pygame.K_s]:
+            direction.y += 1
+        if keys[pygame.K_a]:
+            direction.x -= 1
+        if keys[pygame.K_d]:
+            direction.x += 1
+
+        # If input is being recieved
+        if direction.length() > 0:
+            direction = direction.normalize()
+
+            data_dict = {
+                "TYPE": "MOVE",
+                "DIRECTION": direction
+            }
+            data = json.dumps(data_dict)
+            client.send(data.encode())
+        
+        '''
         key = keyboard.read_event(suppress=True).name
         if key in ["w", "a", "s", "d", "space"]:
             client.send(key.upper().encode('utf-8'))
-            print(f"Sent: {key.upper()}")  # Debugging Purposes
+            print(f"Sent: {key.upper()}")  # Debugging Purposes'
+        '''
 
 def receive_data(client):
     while True:
@@ -57,8 +83,8 @@ def start_client():
         receive_thread.start()
 
         # Wait for threads to finish (you can also use `join()` here if needed)
-        send_thread.join()
-        receive_thread.join()
+        #send_thread.join()
+        #receive_thread.join()
 
     except ConnectionRefusedError:
         print("Unable to connect to the server. Make sure the server is running.")
