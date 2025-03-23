@@ -28,12 +28,6 @@ def start_client():
 
         # Receieve any addtional information from server after user clicks
         # Note: Can be used for game logic/map updating? Since server will send back information
-        try:
-           response = client.recv(1024).decode('utf-8')
-           if response:
-              print(f"Server: {response}")
-        except:
-           pass # Ignore errors if there was no msgs
 
   except ConnectionRefusedError:
       print("Unable to connect to the server. Make sure the server is running.")
