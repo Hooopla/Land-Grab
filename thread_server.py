@@ -27,6 +27,7 @@ def handle_client(client_socket, client_address, clients):
                 break
             else:
                 print(f"Received from {client_address}: {data}")
+                client_socket.send("ACK".encode('utf-8'))
 
     except ConnectionResetError:
         print(f"[ERROR] {client_address} disconnected unexpectedly.")
