@@ -7,7 +7,7 @@ from Player import Player
 # Server Variables/Information
 HOST_IP = '0.0.0.0'
 PORT = 12345
-MAX_CLIENTS = 2
+MAX_CLIENTS = 3
 clients = []  # Hold a list of connected clients
 
 def print_server_capacity(current, capacity):
