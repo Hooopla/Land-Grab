@@ -9,7 +9,7 @@ import time
 SERVER_IP = '127.0.0.1'  # Only to connect to server if on the same machine!
 SERVER_PORT = 12345
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # create client as a global variable
-buffer = ""
+buffer = "" # Store all incoming data into a buffer
 
 # Pygame Details
 pygame.init()
@@ -39,6 +39,7 @@ def send_data():
         if direction.length() > 0:
             direction = direction.normalize()
 
+            # Use a JSON object to send the data
             data_dict = {
                 "TYPE": "MOVE",
                 "direction_x": direction.x,
@@ -66,6 +67,7 @@ def receive_data():
                 message, buffer = buffer.split("\n", 1) # extract 1 full message
                 dict_data = json.loads(message)
 
+                # Based on the "TYPE", handle the data accordingly
                 match dict_data["TYPE"]:
                     
                     case "TEXT":
@@ -127,10 +129,11 @@ test_packet = {
 }
 
 def draw_players():
-    
+    ''' Draws all the players on the screen, based on the list of player coordinates. '''
+
     colours = ["red", "blue", "green", "purple", "orange"]
 
-    with data_lock:
+    with data_lock: # To prevent 2 threads from accessing the same info at the same time
         for player in player_data["players"]:
             pygame.draw.circle(screen, colours[player["id"] % len(colours)], (player["x"], player["y"]), 25)
 
