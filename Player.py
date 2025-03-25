@@ -17,9 +17,9 @@ class Player():
         self.y_pos = 0
         
         self.velocity = pygame.Vector2(0,0)
-        self.acceleration = 750     # How fast you speed up
+        self.acceleration = 1     # How fast you speed up
         self.friction = 0.855       # Slows you down smoothly (lower number --> more friction)
-        self.max_speed = 500        # Maximum Speed
+        self.max_speed = 5        # Maximum Speed
 
     # TODO: Possibly add some sort of deltatime
     def update_position(self, x_dir, y_dir):

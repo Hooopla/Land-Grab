@@ -1,13 +1,15 @@
 # WIP 
 import socket
-import keyboard
 import threading
 import pygame
 import json
+import time
 
 # Server Details
 SERVER_IP = '127.0.0.1'  # Only to connect to server if on the same machine!
 SERVER_PORT = 12345
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # create client as a global variable
+buffer = ""
 
 # Pygame Details
 pygame.init()
@@ -15,8 +17,11 @@ screen = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("Client")
 running = True
 
+# Store player data globally
+player_data = {"players": []}
+data_lock = threading.Lock()    # To prevent 2 threads from accessing the same data and corrupting it
 
-def send_data(client):
+def send_data():
     while True:
         # Send Keyboard inputs
         keys = pygame.key.get_pressed()
@@ -36,35 +41,53 @@ def send_data(client):
 
             data_dict = {
                 "TYPE": "MOVE",
-                "DIRECTION": direction
+                "direction_x": direction.x,
+                "direction_y": direction.y,
             }
             data = json.dumps(data_dict)
-            client.send(data.encode())
+            try:
+                client.send(data.encode())
+            except Exception as e:
+                print(f"Error sending data: {e}")
+                break
         
-        '''
-        key = keyboard.read_event(suppress=True).name
-        if key in ["w", "a", "s", "d", "space"]:
-            client.send(key.upper().encode('utf-8'))
-            print(f"Sent: {key.upper()}")  # Debugging Purposes'
-        '''
+        time.sleep(0.01) # Limit the amount of packets sent per second
 
-def receive_data(client):
+
+def receive_data():
+    
+    global buffer, player_data
+
     while True:
         try:
-            # Receive any additional information from the server after user clicks
-            server_response = client.recv(1024).decode('utf-8')
-            if server_response:
-                print(f"Server: {server_response}")
+            # Stores recieved data in a buffer, ensures that if 2 messages come "combined," they are parsed correctly
+            buffer += client.recv(1024).decode('utf-8')
+            while "\n" in buffer:
+                message, buffer = buffer.split("\n", 1) # extract 1 full message
+                dict_data = json.loads(message)
+
+                match dict_data["TYPE"]:
+                    
+                    case "TEXT":
+                        print(f"Server: {dict_data['message']}")
+                    
+                    case "UPDATE":
+                        with data_lock: # Prevents race conditions
+                            player_data = dict_data # Store the latest info globally (for draw_players)
+                    
+                    case _:
+                        print(f"Invalid type: {dict_data['TYPE']}")
+                
         except Exception as e:
             print(f"Error receiving data from server: {e}")
             break
 
 def start_client():
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
         client.connect((SERVER_IP, SERVER_PORT))
 
+        '''
         # Wait for the initial server message after connection
         server_message = client.recv(1024).decode('utf-8')
         print(f"Server: {server_message}")
@@ -74,10 +97,10 @@ def start_client():
             print(f"Server: {server_message}")
             client.close()
             return
-
+        '''
         # Start separate threads for sending and receiving data
-        send_thread = threading.Thread(target=send_data, args=(client,))
-        receive_thread = threading.Thread(target=receive_data, args=(client,))
+        send_thread = threading.Thread(target=send_data, daemon=True)
+        receive_thread = threading.Thread(target=receive_data, daemon=True)
 
         send_thread.start()
         receive_thread.start()
@@ -91,23 +114,25 @@ def start_client():
     except KeyboardInterrupt:
         print("Client shutting down.")
     finally:
-        client.close()
+        #client.close()
+        pass
 
 
 test_packet = {
     "TYPE": "UPDATE",
-    "PLAYERS": [
+    "players": [
         {"id": 1, "x": 100, "y": 200, "name": "Player1"},
         {"id": 2, "x": 300, "y": 400, "name": "Player2"}
     ]
 }
 
-def draw_players(update_packet):
+def draw_players():
     
     colours = ["red", "blue", "green", "purple", "orange"]
 
-    for player in update_packet["PLAYERS"]:
-        pygame.draw.circle(screen, colours[player["id"]], (player["x"], player["y"]), 25)
+    with data_lock:
+        for player in player_data["players"]:
+            pygame.draw.circle(screen, colours[player["id"] % len(colours)], (player["x"], player["y"]), 25)
 
 
 if __name__ == "__main__":
@@ -123,8 +148,9 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:
                 running = False
 
-        draw_players(test_packet)
+        draw_players()
 
         pygame.display.update()
 
+    client.close()
     pygame.quit()
