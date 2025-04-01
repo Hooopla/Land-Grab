@@ -9,10 +9,14 @@ HOST_IP = '0.0.0.0'
 PORT = 12345
 MAX_CLIENTS = 3
 clients = []  # Hold a list of connected clients
+server_start_time = time.time()
 
 def print_server_capacity(current, capacity):
     print(f"Server Capacity: {current} / {capacity}")
     return
+
+def get_server_age():
+    return int(time.time() - server_start_time)
 
 def broadcast_positions():
     ''' Broadcasts all player positions to every client at a fixed interval. '''
