@@ -27,7 +27,9 @@ def broadcast_positions():
             positions = [{"id": player.player_id, "x": player.x_pos, "y": player.y_pos} for player in clients]
 
             # Convert to json to send to all clients
-            message = json.dumps({"TYPE": "UPDATE", "players": positions}) + "\n"
+            message = json.dumps({"TYPE": "UPDATE",
+                                  "players": positions,
+                                  "age": get_server_age()}) + "\n"
             for player in clients:
                 try:
                     player.client_socket.sendall(message.encode())

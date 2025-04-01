@@ -16,10 +16,12 @@ pygame.init()
 screen = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("Client")
 running = True
+text_font = pygame.font.SysFont("Arial", 30) # Default font to pass into draw_text
 
 # Store player data globally
 player_data = {"players": []}
 data_lock = threading.Lock()    # To prevent 2 threads from accessing the same data and corrupting it
+server_age = 0
 
 def send_data():
     while True:
@@ -57,7 +59,7 @@ def send_data():
 
 def receive_data():
     
-    global buffer, player_data
+    global buffer, player_data, server_age
 
     while True:
         try:
@@ -76,6 +78,7 @@ def receive_data():
                     case "UPDATE":
                         with data_lock: # Prevents race conditions
                             player_data = dict_data # Store the latest info globally (for draw_players)
+                        server_age = dict_data["age"]
                     
                     case _:
                         print(f"Invalid type: {dict_data['TYPE']}")
@@ -138,6 +141,10 @@ def draw_players():
             pygame.draw.circle(screen, colours[player["id"] % len(colours)], (player["x"], player["y"]), 25)
 
 
+def draw_text(text, font, colour, x, y):
+    img = font.render(text, True, colour)
+    screen.blit(img, (x, y))
+
 if __name__ == "__main__":
     start_client()
 
@@ -152,6 +159,7 @@ if __name__ == "__main__":
                 running = False
 
         draw_players()
+        draw_text(str(server_age), text_font, (255,255,255), 0, 0)
 
         pygame.display.update()
 
