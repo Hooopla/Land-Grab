@@ -37,6 +37,17 @@ def send_data():
         if keys[pygame.K_d]:
             direction.x += 1
 
+        if keys[pygame.K_SPACE]:    # "SELECT"
+            ''' Send a packet with type SELECT, the server will determine the
+                postion and use it to make the selection. '''
+            try:
+                data_dict = {"TYPE": "SELECT"}
+                data = json.dumps(data_dict)
+                client.send(data.encode())
+            except Exception as e:
+                print(f"Error sending data during select: {e}")
+                break
+
         # If input is being recieved
         if direction.length() > 0:
             direction = direction.normalize()

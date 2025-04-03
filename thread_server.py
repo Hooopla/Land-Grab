@@ -63,6 +63,14 @@ def handle_client(player: Player):
                     case "MOVE":
                         player.update_position(data_dict['direction_x'], data_dict['direction_y'])
                         print(f"{player.client_address} has moved to: ({player.x_pos}, {player.y_pos})") # For debugging
+                    case "SELECT":
+                        if player.has_selected == False:                            
+                            x = player.x_pos
+                            y = player.y_pos
+
+                            # TODO: Implement Prottoy's selection logic here
+                        else:
+                            print(f"[ERROR] {player.client_address} tried to SELECT but already has!")
                     case _:
                         print(f"[ERROR] Invalid packet type: {data_dict['TYPE']}")
 
