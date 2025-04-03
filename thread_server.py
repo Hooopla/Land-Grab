@@ -9,6 +9,7 @@ HOST_IP = '0.0.0.0'
 PORT = 12345
 MAX_CLIENTS = 3
 clients = []  # Hold a list of connected clients
+available_player_ids = set(range(MAX_CLIENTS)) # set of available IDs
 server_start_time = time.time()
 
 def print_server_capacity(current, capacity):
@@ -72,11 +73,16 @@ def handle_client(player: Player):
 
     except ConnectionResetError:
         print(f"[ERROR] {player.client_address} disconnected unexpectedly.")
+
+    finally:
         clients.remove(player)
+        available_player_ids.add(player.player_id)  # add id back to available ids
         player.client_socket.close()
         print_server_capacity(len(clients), MAX_CLIENTS)
 
+
 def start_server():
+    
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((HOST_IP, PORT))
     server.listen(MAX_CLIENTS)
@@ -89,8 +95,11 @@ def start_server():
     while True:
         if len(clients) < MAX_CLIENTS:
             client_socket, client_address = server.accept()
-            new_player = Player(len(clients), client_socket, client_address) # Store client socket/address info
             
+            player_id = min(available_player_ids)   # get the smallest available id
+            available_player_ids.remove(player_id)  # mark the id as used
+            
+            new_player = Player(player_id, client_socket, client_address) # Store client socket/address info
             clients.append(new_player)
 
             # Start a new thread for the client
