@@ -91,7 +91,7 @@ def broadcast_positions():
 
 def handle_client(player: Player):
     global show_full_shapes, show_grid_outlines, show_outlines, region_revealed
-    
+    buffer = " "
     try:
         print(f"{player.client_address} has joined the game.")
         welcome_message = json.dumps({"TYPE": "TEXT", "message": "Welcome to the server!"}) + "\n"
@@ -107,10 +107,12 @@ def handle_client(player: Player):
                 player.client_socket.close()
                 print_server_capacity(len(clients), MAX_CLIENTS)
                 break
-            else:
+            buffer += data
+            while "\n" in buffer:
                 #print(f"Received from {player.client_address}: {data}")
+                line, buffer = buffer.split("\n", 1)
+                data_dict = json.loads(line)
 
-                data_dict = json.loads(data)
                 match data_dict["TYPE"]:
                     case "MOVE":
                         player.update_position(data_dict['direction_x'], data_dict['direction_y'])
