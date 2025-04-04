@@ -61,7 +61,7 @@ def send_data():
                 postion and use it to make the selection. '''
             try:
                 data_dict = {"TYPE": "SELECT"}
-                data = json.dumps(data_dict)
+                data = json.dumps(data_dict) + "\n"
                 client.send(data.encode())
             except Exception as e:
                 print(f"Error sending data during select: {e}")
@@ -70,7 +70,7 @@ def send_data():
         if keys[pygame.K_p]:       # "READY"
             try:
                 data_dict = {"TYPE": "READY"}
-                data = json.dumps(data_dict)
+                data = json.dumps(data_dict) + "\n"
                 client.send(data.encode())
             except Exception as e:
                 print(f"Error sending data during ready: {e}")
@@ -87,7 +87,7 @@ def send_data():
                 "direction_x": direction.x,
                 "direction_y": direction.y,
             }
-            data = json.dumps(data_dict)
+            data = json.dumps(data_dict) + "\n"
             try:
                 client.send(data.encode())
             except Exception as e:
