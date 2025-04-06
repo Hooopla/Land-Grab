@@ -4,6 +4,7 @@ import threading
 import pygame
 import json
 import time
+import sys
 from board_utils import draw_grid_outlines, draw_shape_outlines, reveal_shapes
 
 # Server Details
@@ -26,6 +27,7 @@ PLAYER_COLOURS = ["red", "blue", "green", "purple", "orange"]
 player_data = {"players": []}
 data_lock = threading.Lock()    # To prevent 2 threads from accessing the same data and corrupting it
 server_age = 0
+server_full = False
 
 # Board Details
 ROWS, COLS = 7, 9
@@ -131,6 +133,8 @@ def receive_data():
                         
                     case "FULL_SERVER":
                         print(f"Server is currently full please try again later.")
+                        global server_full
+                        server_full = True
 
                     case _:
                         print(f"Invalid type: {dict_data['TYPE']}")
@@ -206,6 +210,13 @@ if __name__ == "__main__":
     while running:
 
         screen.fill("black") # clear the screen
+
+        # If the server is full, display the full message and exit
+        if server_full:
+            draw_text("Server is full, please try again later.", text_font, (255, 255, 255), screen.get_width() // 3, screen.get_height() // 2)
+            pygame.display.update()  # Ensure the message is shown
+            time.sleep(5)
+            break;
 
         # Poll for events
         for event in pygame.event.get():
