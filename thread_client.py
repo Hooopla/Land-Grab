@@ -129,6 +129,8 @@ def receive_data():
                         game_board = dict_data["game_board"]
                         print(f"Recieved game board from server: {game_board}")
                         
+                    case "FULL_SERVER":
+                        print(f"Server is currently full please try again later.")
 
                     case _:
                         print(f"Invalid type: {dict_data['TYPE']}")

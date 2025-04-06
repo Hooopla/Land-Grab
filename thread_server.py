@@ -200,8 +200,9 @@ def start_server():
 
         else:
             client_socket, client_address = server.accept()
+            server_full_message = json.dumps({"TYPE": "FULL_SERVER", "message": "Server is full please try again later."}) + "\n"
+            client_socket.send(server_full_message.encode('utf-8'))
             print(f"Connection from {client_address} is declined because server is currently full.")
-            client_socket.send("Server is full. Please try again later. \n".encode('utf-8'))
             client_socket.close()
 
 if __name__ == "__main__":
