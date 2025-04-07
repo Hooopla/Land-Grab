@@ -28,6 +28,7 @@ player_data = {"players": []}
 data_lock = threading.Lock()    # To prevent 2 threads from accessing the same data and corrupting it
 server_age = 0
 server_full = False
+display_controls = False
 
 # Board Details
 ROWS, COLS = 7, 9
@@ -68,7 +69,7 @@ def send_data():
             except Exception as e:
                 print(f"Error sending data during select: {e}")
                 break
-
+            
         if keys[pygame.K_p]:       # "READY"
             try:
                 data_dict = {"TYPE": "READY"}
@@ -77,8 +78,6 @@ def send_data():
             except Exception as e:
                 print(f"Error sending data during ready: {e}")
                 break
-
-
         # If input is being recieved
         if direction.length() > 0:
             direction = direction.normalize()
@@ -201,7 +200,48 @@ def draw_text(text, font, colour, x, y):
     img = font.render(text, True, colour)
     screen.blit(img, (x, y))
 
+def controls_ui():
+    global display_controls
+    if display_controls:
+        lines = [
+            "IN-GAME Controls",
+            "'SPACE' - Claim tiles",
+            "",
+            "LOBBY Controls",
+            "'Q' - Ready/Unready"
+        ]
 
+        # Set the initial position at the top-right corner
+        margin_right = 10
+        margin_top = 10
+        x = screen.get_width() - margin_right
+        y = margin_top
+
+        for line in lines:
+            text_surface = text_font.render(line, True, (255, 255, 255))
+            text_width = text_surface.get_width()
+            draw_text(line, text_font, (255, 255, 255), x - text_width, y)
+            y += text_surface.get_height() + 5
+    else:
+        lines = [
+            "Press 'ESC' for controls",
+            "",
+            "",
+            "",
+            ""
+        ]
+
+        # Set the initial position at the top-right corner
+        margin_right = 10
+        margin_top = 10
+        x = screen.get_width() - margin_right
+        y = margin_top
+
+        for line in lines:
+            text_surface = text_font.render(line, True, (255, 255, 255))
+            text_width = text_surface.get_width()
+            draw_text(line, text_font, (255, 255, 255), x - text_width, y)
+            y += text_surface.get_height() + 5
 
 if __name__ == "__main__":
     start_client()
@@ -222,7 +262,12 @@ if __name__ == "__main__":
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    display_controls = not display_controls
+                
 
+        controls_ui()
         draw_board()
         draw_players()
         draw_text(str(server_age), text_font, (255,255,255), 0, 0)
