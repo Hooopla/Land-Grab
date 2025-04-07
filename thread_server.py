@@ -169,18 +169,19 @@ def handle_client(player: Player):
                             # Prottoy's selection logic
                             col_selected = int((x - BOARD_OFFSET_X) // CELL_WIDTH)
                             row_selected = int((y - BOARD_OFFSET_Y) // CELL_HEIGHT)
-                            selected_region_id = game_board[row_selected][col_selected]
-                            
-                            # TODO: Check bounds of selection?
+                            if 0 <= row_selected < ROWS and 0 <= col_selected < COLS:
+                                selected_region_id = game_board[row_selected][col_selected]
 
-                            with data_lock: # to protect shared data access
-                                if not region_revealed[selected_region_id]:
-                                    region_revealed[selected_region_id] = True # Region is now revealed
-                                    region_owner[selected_region_id] = player.player_id # Assign region to player
-                                    print(f"Region {selected_region_id} has been claimed by player {player.player_id}")
-                                    check_winner()
-                            
-                            player.has_selected = True
+                                with data_lock:
+                                    if not region_revealed[selected_region_id]:
+                                        region_revealed[selected_region_id] = True
+                                        region_owner[selected_region_id] = player.player_id
+                                        print(f"Region {selected_region_id} has been claimed by player {player.player_id}")
+                                        check_winner()
+
+                                player.has_selected = True
+                            else:
+                                print(f"[WARN] Player {player.player_id} attempted invalid selection at ({row_selected}, {col_selected})")                            
 
                     case "READY":
                         if player.is_ready == False:

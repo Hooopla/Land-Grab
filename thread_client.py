@@ -8,7 +8,7 @@ import sys
 from board_utils import draw_grid_outlines, draw_shape_outlines, reveal_shapes
 
 # Server Details
-SERVER_IP = '127.0.0.1'  # Only to connect to server if on the same machine!
+SERVER_IP = '192.168.1.64'  # Only to connect to server if on the same machine!
 SERVER_PORT = 12345
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # create client as a global variable
 buffer = "" # Store all incoming data into a buffer
@@ -61,16 +61,22 @@ def send_data():
         if keys[pygame.K_d]:
             direction.x += 1
 
-        if keys[pygame.K_SPACE]:    # "SELECT"
-            ''' Send a packet with type SELECT, the server will determine the
-                postion and use it to make the selection. '''
-            try:
-                data_dict = {"TYPE": "SELECT"}
-                data = json.dumps(data_dict) + "\n"
-                client.send(data.encode())
-            except Exception as e:
-                print(f"Error sending data during select: {e}")
-                break
+        if keys[pygame.K_SPACE] and game_board:
+            # Only send SELECT if player is standing on a valid region
+            with data_lock:
+                for player in player_data["players"]:
+                    px, py = player["x"], player["y"]
+                    col = int((px - BOARD_OFFSET_X) // CELL_WIDTH)
+                    row = int((py - BOARD_OFFSET_Y) // CELL_HEIGHT)
+                    if 0 <= row < ROWS and 0 <= col < COLS:
+                        try:
+                            data_dict = {"TYPE": "SELECT"}
+                            data = json.dumps(data_dict) + "\n"
+                            client.send(data.encode())
+                        except Exception as e:
+                            print(f"Error sending data during select: {e}")
+                    break  
+
 
         if keys[pygame.K_p]:       # "READY"
             try:
