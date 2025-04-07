@@ -222,7 +222,7 @@ def display_controls_ui():
             "'SPACE' - Claim tiles",
             "",
             "LOBBY Controls",
-            "'Q' - Ready/Unready"
+            "'P' - Ready/Unready"
         ]
 
         # Set the initial position at the top-right corner
