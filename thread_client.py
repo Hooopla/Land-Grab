@@ -48,6 +48,9 @@ region_revealed = [False, False, False]
 # Track region ownership
 region_owner = [None, None, None]
 
+# Message for winner
+winner_message = ""
+
 def send_data():
     while True:
         # Send Keyboard inputs
@@ -109,8 +112,7 @@ def send_data():
 
 def receive_data():
     
-    global buffer, player_data, server_age, game_board, show_outlines, show_full_shapes, show_grid_outlines, region_revealed, region_owner
-
+    global buffer, player_data, server_age, game_board, show_outlines, show_full_shapes, show_grid_outlines, region_revealed, region_owner, winner_message
     while True:
         try:
             # Stores recieved data in a buffer, ensures that if 2 messages come "combined," they are parsed correctly
@@ -146,8 +148,9 @@ def receive_data():
                         server_full = True
                     
                     case "END_ROUND":
-                        print(f"Round has ended. Winner: {dict_data['winner']}")
-                        
+                        winner = dict_data["winner"]
+                        print(f"Round has ended. Winner: Player {winner}") # debug statements
+                        winner_message = f"Game Over! Player {winner} is the winner!"
 
                     case _:
                         print(f"Invalid type: {dict_data['TYPE']}")
@@ -285,6 +288,11 @@ if __name__ == "__main__":
         draw_board()
         draw_players()
         draw_text(str(server_age), text_font, (255,255,255), 0, 0)
+        
+        # Display the winner message underneath the board
+        if winner_message:
+            draw_text(winner_message, text_font, (255,255,255), screen.get_width() // 3, screen.get_height() - 150)
+
         pygame.display.update()
 
     client.close()
