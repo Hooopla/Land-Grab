@@ -29,6 +29,7 @@ data_lock = threading.Lock()    # To prevent 2 threads from accessing the same d
 remaining_time = 0
 server_full = False
 display_controls = False
+display_ready = False
 
 # Board Details
 ROWS, COLS = 7, 9
@@ -224,18 +225,6 @@ def display_controls_ui():
             "LOBBY Controls",
             "'P' - Ready/Unready"
         ]
-
-        # Set the initial position at the top-right corner
-        margin_right = 10
-        margin_top = 10
-        x = screen.get_width() - margin_right
-        y = margin_top
-
-        for line in lines:
-            text_surface = text_font.render(line, True, (255, 255, 255))
-            text_width = text_surface.get_width()
-            draw_text(line, text_font, (255, 255, 255), x - text_width, y)
-            y += text_surface.get_height() + 5
     else:
         lines = [
             "Press 'ESC' for controls",
@@ -245,17 +234,52 @@ def display_controls_ui():
             ""
         ]
 
-        # Set the initial position at the top-right corner
-        margin_right = 10
-        margin_top = 10
-        x = screen.get_width() - margin_right
-        y = margin_top
+    # Set the initial position at the top-right corner
+    margin_right = 10
+    margin_top = 10
+    x = screen.get_width() - margin_right
+    y = margin_top
 
-        for line in lines:
-            text_surface = text_font.render(line, True, (255, 255, 255))
-            text_width = text_surface.get_width()
-            draw_text(line, text_font, (255, 255, 255), x - text_width, y)
-            y += text_surface.get_height() + 5
+    for line in lines:
+        text_surface = text_font.render(line, True, (255, 255, 255))
+        text_width = text_surface.get_width()
+        draw_text(line, text_font, (255, 255, 255), x - text_width, y)
+        y += text_surface.get_height() + 5
+
+def display_ready_ui():
+    global display_ready
+
+    # Colors for ready and not ready
+    ready_color = (0, 255, 0) # Green
+    not_ready_color = (255, 0, 0) # Red
+
+    if display_ready:
+        lines = [
+            "READY",
+        ]
+        text_color = ready_color
+    else:
+        lines = [
+            "NOT READY",
+        ]
+        text_color = not_ready_color
+
+    # Set margins
+    margin_left = 10
+    margin_bottom = 10
+
+    # Calculate total height of the block
+    total_height = sum(text_font.render(line, True, (255, 255, 255)).get_height() + 5 for line in lines) - 5
+
+    # Position at bottom-left
+    x = margin_left
+    y = screen.get_height() - margin_bottom - total_height
+
+    for line in lines:
+        text_surface = text_font.render(line, True, text_color)
+        draw_text(line, text_font, text_color, x, y)
+        y += text_surface.get_height() + 5
+
 
 if __name__ == "__main__":
     start_client()
@@ -279,8 +303,10 @@ if __name__ == "__main__":
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     display_controls = not display_controls
+                elif event.key == pygame.K_p:
+                    display_ready = not display_ready
                 
-
+        display_ready_ui()
         display_controls_ui()
         draw_board()
         draw_players()
