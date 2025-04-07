@@ -142,6 +142,7 @@ def receive_data():
                     
                     case "END_ROUND":
                         print(f"Round has ended. Winner: {dict_data['winner']}")
+                        show_winner_alert(dict_data['winner'])
                         
 
                     case _:
@@ -209,7 +210,30 @@ def draw_text(text, font, colour, x, y):
     img = font.render(text, True, colour)
     screen.blit(img, (x, y))
 
+def show_winner_alert(winner_id):
+    """
+    Displays a full-screen alert overlay announcing the winner.
+    The winner_id is incremented by 1 so that player numbering starts at 1.
+    """
+    # Create a semi-transparent overlay (RGBA: last value is alpha)
+    overlay = pygame.Surface((SCREEN_WIDTH // 6, SCREEN_HEIGHT // 4), pygame.SRCALPHA)
+    overlay.fill((10, 10, 10, 180))  # Dark translucent
 
+    # Prepare the alert message; add 1 to winner_id so player numbering starts at 1
+    alert_text = f"Game Over! Player {winner_id + 1} wins!"
+    
+    # Choose a font and render the text
+    alert_font = pygame.font.SysFont("Arial", 30)
+    text_surface = alert_font.render(alert_text, True, (255, 255, 255))
+    text_rect = text_surface.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+    
+    # Blit (draw) the overlay and then the text on the screen
+    screen.blit(overlay, (0, 0))
+    screen.blit(text_surface, text_rect)
+    pygame.display.update()
+    
+    # Pause for a few seconds so the player can read the message
+    time.sleep(7.5)
 
 if __name__ == "__main__":
     start_client()
