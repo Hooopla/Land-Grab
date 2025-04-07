@@ -55,10 +55,10 @@ def check_ready_status():
     for player in clients:
         if player.is_ready:
             players_ready += 1
-    print(f"{players_ready} / {len(clients)} are ready!")
+    print(f"{players_ready} / {MAX_CLIENTS} are ready!")
 
     # If all players are ready
-    if players_ready == len(clients):
+    if players_ready == MAX_CLIENTS:
         print("All players are reading. Starting the round!")
         game_board = generate_game_board(ROWS, COLS)
 
