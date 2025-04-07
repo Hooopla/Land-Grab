@@ -8,7 +8,7 @@ import sys
 from board_utils import draw_grid_outlines, draw_shape_outlines, reveal_shapes
 
 # Server Details
-SERVER_IP = '127.0.0.1'  # Only to connect to server if on the same machine!
+SERVER_IP = '192.168.1.64'  # Only to connect to server if on the same machine!
 SERVER_PORT = 12345
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # create client as a global variable
 buffer = "" # Store all incoming data into a buffer
@@ -45,6 +45,9 @@ show_full_shapes = False
 show_grid_outlines = False
 region_revealed = [False, False, False]
 
+# Track region ownership
+region_owner = [None, None, None]
+
 def send_data():
     while True:
         # Send Keyboard inputs
@@ -59,6 +62,7 @@ def send_data():
         if keys[pygame.K_d]:
             direction.x += 1
 
+<<<<<<< HEAD
         if keys[pygame.K_SPACE]:    # "SELECT"
             ''' Send a packet with type SELECT, the server will determine the
                 postion and use it to make the selection. '''
@@ -70,6 +74,25 @@ def send_data():
                 print(f"Error sending data during select: {e}")
                 break
             
+=======
+        if keys[pygame.K_SPACE] and game_board:
+            # Only send SELECT if player is standing on a valid region
+            with data_lock:
+                for player in player_data["players"]:
+                    px, py = player["x"], player["y"]
+                    col = int((px - BOARD_OFFSET_X) // CELL_WIDTH)
+                    row = int((py - BOARD_OFFSET_Y) // CELL_HEIGHT)
+                    if 0 <= row < ROWS and 0 <= col < COLS:
+                        try:
+                            data_dict = {"TYPE": "SELECT"}
+                            data = json.dumps(data_dict) + "\n"
+                            client.send(data.encode())
+                        except Exception as e:
+                            print(f"Error sending data during select: {e}")
+                    break  
+
+
+>>>>>>> tanhim
         if keys[pygame.K_p]:       # "READY"
             try:
                 data_dict = {"TYPE": "READY"}
@@ -100,7 +123,7 @@ def send_data():
 
 def receive_data():
     
-    global buffer, player_data, server_age, game_board, show_outlines, show_full_shapes, show_grid_outlines, region_revealed
+    global buffer, player_data, server_age, game_board, show_outlines, show_full_shapes, show_grid_outlines, region_revealed, region_owner
 
     while True:
         try:
@@ -124,6 +147,7 @@ def receive_data():
                         show_full_shapes = dict_data["show_full_shapes"]
                         show_grid_outlines = dict_data["show_grid_outlines"]
                         region_revealed = dict_data["region_revealed"]
+                        region_owner = dict_data.get("region_owner", [None, None, None])
 
                     
                     case "START_ROUND":
@@ -134,6 +158,10 @@ def receive_data():
                         print(f"Server is currently full please try again later.")
                         global server_full
                         server_full = True
+                    
+                    case "END_ROUND":
+                        print(f"Round has ended. Winner: {dict_data['winner']}")
+                        
 
                     case _:
                         print(f"Invalid type: {dict_data['TYPE']}")
@@ -186,7 +214,7 @@ def draw_board():
 
     if game_board:
         reveal_shapes(screen, game_board, ROWS, COLS, CELL_WIDTH, CELL_HEIGHT,
-                      BOARD_OFFSET_X, BOARD_OFFSET_Y, PLAYER_COLOURS, region_revealed)
+                      BOARD_OFFSET_X, BOARD_OFFSET_Y, PLAYER_COLOURS, region_revealed, region_owner)
         if show_outlines:
             draw_shape_outlines(screen, game_board, ROWS, COLS, CELL_WIDTH, CELL_HEIGHT,
                                 BOARD_OFFSET_X, BOARD_OFFSET_Y, "white")
@@ -256,7 +284,7 @@ if __name__ == "__main__":
             draw_text("Server is full, please try again later.", text_font, (255, 255, 255), screen.get_width() // 3, screen.get_height() // 2)
             pygame.display.update()  # Ensure the message is shown
             time.sleep(5)
-            break;
+            break
 
         # Poll for events
         for event in pygame.event.get():

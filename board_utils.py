@@ -25,10 +25,10 @@ def draw_shape_outlines(surface, game_board, rows, cols,
 
 
 def reveal_shapes(surface, game_board, rows, cols, cell_width, cell_height, board_offset_x, board_offset_y, 
-                  shape_colors, region_revealed):
+                  shape_colors, region_revealed, region_owner):
     """
     Fill only the shapes that have been revealed/claimed.
-    region_revealed is a list [bool, bool, bool], indicating if region i is revealed.
+    If a region is revealed, use the color corresponding to the owner of that region.
     """
     for row in range(rows):
         for col in range(cols):
@@ -36,10 +36,13 @@ def reveal_shapes(surface, game_board, rows, cols, cell_width, cell_height, boar
             # compute offset coordinates
             x = board_offset_x + col * cell_width
             y = board_offset_y + row * cell_height
-
+            rect = pygame.Rect(x, y, cell_width, cell_height)
             if region_revealed[shape_id]:
-                color = shape_colors[shape_id % len(shape_colors)]
-                rect = pygame.Rect(x, y, cell_width, cell_height)
+                owner = region_owner[shape_id]
+                if owner is not None:
+                    color = shape_colors[owner % len(shape_colors)]
+                else:
+                    color = shape_colors[shape_id % len(shape_colors)]
                 pygame.draw.rect(surface, color, rect)
 
 def draw_grid_outlines(surface, rows, cols, cell_width, cell_height, offset_x, offset_y, outline_color=(0,0,0)):

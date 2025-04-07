@@ -5,6 +5,7 @@ import json
 import time
 from Player import Player
 from generate_game_board import generate_game_board
+from board_utils import count_region_cells
 
 # Server Variables/Information
 HOST_IP = '0.0.0.0'
@@ -33,6 +34,9 @@ show_full_shapes = False
 show_grid_outlines = False
 region_revealed = [False, False, False]
 
+# Track which player claimed which region
+region_owner = [None, None, None]
+
 
 
 
@@ -51,16 +55,53 @@ def check_ready_status():
     for player in clients:
         if player.is_ready:
             players_ready += 1
-    print(f"{players_ready} / {len(clients)} are ready!")
+    print(f"{players_ready} / {MAX_CLIENTS} are ready!")
 
     # If all players are ready
-    if players_ready == len(clients):
+    if players_ready == MAX_CLIENTS:
         print("All players are reading. Starting the round!")
         game_board = generate_game_board(ROWS, COLS)
 
         message = json.dumps({"TYPE": "START_ROUND", "game_board": game_board}) + "\n"
         for player in clients:
             player.client_socket.sendall(message.encode())
+
+def broadcast_winner(winner_player_id):
+    '''
+    Sends an 'END_ROUND' packet to all clients announcing the winner of the round.
+    '''
+    message_dict = {
+        "TYPE": "END_ROUND",
+        "winner": winner_player_id
+    }
+    message = json.dumps(message_dict) + "\n"
+    for player in clients:
+        try:
+            player.client_socket.sendall(message.encode())
+        except Exception as e:
+            print(f"ERROR: Unable to send winner data to player {player.player_id}: {e}")
+
+def check_winner():
+    ''' 
+    Checks if all regions have been revealed. If so, counts cells in each region and then determines which
+    region has the most cells. The player who claimed that region is declared and announced the winner.
+    '''
+    global game_board, region_revealed
+    
+    # Check if there is a winner
+    if all(region_revealed):
+        # Count cells in each region
+        region_cell_counts = count_region_cells(game_board)
+        max_cells = max(region_cell_counts)
+        winning_region = region_cell_counts.index(max_cells)
+        
+        # Look up the owner of the winning region
+        winner_id = region_owner[winning_region]
+        
+        # Announce the winner
+        print(f"Player {winner_id} has won the round with {max_cells} cells!")  
+        broadcast_winner(winner_id)
+        
 
 def broadcast_positions():
     ''' Broadcasts all player positions to every client at a fixed interval. '''
@@ -79,6 +120,7 @@ def broadcast_positions():
                                     "show_full_shapes": show_full_shapes,
                                     "show_grid_outlines": show_grid_outlines,
                                     "region_revealed": region_revealed,
+                                    "region_owner": region_owner,
                                     "age": get_server_age()}) + "\n"
                 
             for player in clients:
@@ -127,19 +169,19 @@ def handle_client(player: Player):
                             # Prottoy's selection logic
                             col_selected = int((x - BOARD_OFFSET_X) // CELL_WIDTH)
                             row_selected = int((y - BOARD_OFFSET_Y) // CELL_HEIGHT)
+                            if 0 <= row_selected < ROWS and 0 <= col_selected < COLS:
+                                selected_region_id = game_board[row_selected][col_selected]
 
-                            # TODO: Check bounds of selection?
+                                with data_lock:
+                                    if not region_revealed[selected_region_id]:
+                                        region_revealed[selected_region_id] = True
+                                        region_owner[selected_region_id] = player.player_id
+                                        print(f"Region {selected_region_id} has been claimed by player {player.player_id}")
+                                        check_winner()
 
-                            selected_region_id = game_board[row_selected][col_selected]
-
-                            with data_lock: # to protect shared data access
-                                if not region_revealed[selected_region_id]:
-                                    region_revealed[selected_region_id] = True # TODO: Assign this to a player rather than true
-
-                                    # TODO: check for winners
-                            
-
-                            player.has_selected = True
+                                player.has_selected = True
+                            else:
+                                print(f"[WARN] Player {player.player_id} attempted invalid selection at ({row_selected}, {col_selected})")                            
 
                     case "READY":
                         if player.is_ready == False:
