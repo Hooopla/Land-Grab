@@ -62,19 +62,6 @@ def send_data():
         if keys[pygame.K_d]:
             direction.x += 1
 
-<<<<<<< HEAD
-        if keys[pygame.K_SPACE]:    # "SELECT"
-            ''' Send a packet with type SELECT, the server will determine the
-                postion and use it to make the selection. '''
-            try:
-                data_dict = {"TYPE": "SELECT"}
-                data = json.dumps(data_dict) + "\n"
-                client.send(data.encode())
-            except Exception as e:
-                print(f"Error sending data during select: {e}")
-                break
-            
-=======
         if keys[pygame.K_SPACE] and game_board:
             # Only send SELECT if player is standing on a valid region
             with data_lock:
@@ -92,7 +79,6 @@ def send_data():
                     break  
 
 
->>>>>>> tanhim
         if keys[pygame.K_p]:       # "READY"
             try:
                 data_dict = {"TYPE": "READY"}
