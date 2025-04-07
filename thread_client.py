@@ -200,7 +200,7 @@ def draw_text(text, font, colour, x, y):
     img = font.render(text, True, colour)
     screen.blit(img, (x, y))
 
-def controls_ui():
+def display_controls_ui():
     global display_controls
     if display_controls:
         lines = [
@@ -267,11 +267,10 @@ if __name__ == "__main__":
                     display_controls = not display_controls
                 
 
-        controls_ui()
+        display_controls_ui()
         draw_board()
         draw_players()
         draw_text(str(server_age), text_font, (255,255,255), 0, 0)
-
         pygame.display.update()
 
     client.close()
