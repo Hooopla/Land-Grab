@@ -135,6 +135,10 @@ def receive_data():
                         print(f"Server is currently full please try again later.")
                         global server_full
                         server_full = True
+                    
+                    case "END_ROUND":
+                        print(f"Round has ended. Winner: {dict_data['winner']}")
+                        
 
                     case _:
                         print(f"Invalid type: {dict_data['TYPE']}")
