@@ -26,7 +26,7 @@ PLAYER_COLOURS = ["red", "blue", "green", "purple", "orange"]
 # Store player data globally
 player_data = {"players": []}
 data_lock = threading.Lock()    # To prevent 2 threads from accessing the same data and corrupting it
-server_age = 0
+remaining_time = 0
 server_full = False
 display_controls = False
 
@@ -66,20 +66,12 @@ def send_data():
             direction.x += 1
 
         if keys[pygame.K_SPACE] and game_board:
-            # Only send SELECT if player is standing on a valid region
-            with data_lock:
-                for player in player_data["players"]:
-                    px, py = player["x"], player["y"]
-                    col = int((px - BOARD_OFFSET_X) // CELL_WIDTH)
-                    row = int((py - BOARD_OFFSET_Y) // CELL_HEIGHT)
-                    if 0 <= row < ROWS and 0 <= col < COLS:
-                        try:
-                            data_dict = {"TYPE": "SELECT"}
-                            data = json.dumps(data_dict) + "\n"
-                            client.send(data.encode())
-                        except Exception as e:
-                            print(f"Error sending data during select: {e}")
-                    break  
+            try:
+                data_dict = {"TYPE": "SELECT"}
+                data = json.dumps(data_dict) + "\n"
+                client.send(data.encode())
+            except Exception as e:
+                print(f"Error sending SELECT: {e}")
 
 
         if keys[pygame.K_p]:       # "READY"
@@ -112,7 +104,7 @@ def send_data():
 
 def receive_data():
     
-    global buffer, player_data, server_age, game_board, show_outlines, show_full_shapes, show_grid_outlines, region_revealed, region_owner, winner_message
+    global buffer, player_data, remaining_time, game_board, show_outlines, show_full_shapes, show_grid_outlines, region_revealed, region_owner, winner_message
     while True:
         try:
             # Stores recieved data in a buffer, ensures that if 2 messages come "combined," they are parsed correctly
@@ -130,7 +122,7 @@ def receive_data():
                     case "UPDATE":
                         with data_lock: # Prevents race conditions
                             player_data = dict_data # Store the latest info globally (for draw_players)
-                        server_age = dict_data["age"]
+                        remaining_time = dict_data["remaining_time"]
                         show_outlines = dict_data["show_outlines"]
                         show_full_shapes = dict_data["show_full_shapes"]
                         show_grid_outlines = dict_data["show_grid_outlines"]
@@ -151,6 +143,11 @@ def receive_data():
                         winner = dict_data["winner"]
                         print(f"Round has ended. Winner: Player {winner}") # debug statements
                         winner_message = f"Game Over! Player {winner} is the winner!"
+
+                    case "RESET_ROUND":
+                        print("Round is being reset...")
+                        game_board = None
+                        winner_message = None
 
                     case _:
                         print(f"Invalid type: {dict_data['TYPE']}")
@@ -287,7 +284,7 @@ if __name__ == "__main__":
         display_controls_ui()
         draw_board()
         draw_players()
-        draw_text(str(server_age), text_font, (255,255,255), 0, 0)
+        draw_text(str(remaining_time), text_font, (255,255,255), 0, 0)
         
         # Display the winner message underneath the board
         if winner_message:

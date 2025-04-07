@@ -36,6 +36,9 @@ region_revealed = [False, False, False]
 
 # Track which player claimed which region
 region_owner = [None, None, None]
+round_start_time = None
+round_in_progress = False
+ROUND_DURATION = 10
 
 
 
@@ -49,22 +52,79 @@ def get_server_age():
 
 def check_ready_status():
     ''' Checks if all connected players are ready and sends the board if they are. '''
-    global game_board
+    global game_board, round_in_progress, round_start_time
 
+    # Count the ready players
     players_ready = 0
     for player in clients:
         if player.is_ready:
             players_ready += 1
     print(f"{players_ready} / {MAX_CLIENTS} are ready!")
 
-    # If all players are ready
-    if players_ready == MAX_CLIENTS:
+    # If all players are ready, and round hasn't already started
+    if players_ready == MAX_CLIENTS and not round_in_progress:
         print("All players are reading. Starting the round!")
+        round_start_time = time.time()
+        round_in_progress = True
         game_board = generate_game_board(ROWS, COLS)
 
+        # Broadcast the game board to all clients
         message = json.dumps({"TYPE": "START_ROUND", "game_board": game_board}) + "\n"
         for player in clients:
             player.client_socket.sendall(message.encode())
+
+        # Start the round timer thread
+        timer_thread = threading.Thread(target=round_timer_thread, daemon=True)
+        timer_thread.start()
+
+def round_timer_thread():
+    ''' Thread to constantly keep track of how much time is left in the round. '''
+    global round_in_progress
+
+    while time.time() - round_start_time < ROUND_DURATION:
+        time.sleep(0.1)
+        if all(p.has_selected for p in clients):
+            print("All players have selected before time as run out. Ending round.")
+            break
+    
+    # If round duration timer is up
+    if round_in_progress:
+        print(f"{ROUND_DURATION} seconds passed or all have selected. Ending round.")
+        end_round()
+
+
+def end_round():
+    ''' Handles any cleanup or resetting needed between rounds. '''
+    global region_revealed, region_owner, round_in_progress, game_board
+
+    round_in_progress = False
+
+    # determine a winner
+    if not all(region_revealed):
+        broadcast_winner(None)
+    else:
+        check_winner()
+
+    # create a brief pause as to not reset instantly
+    time.sleep(4)
+
+    # reset the data
+    with data_lock:
+        region_revealed = [False, False, False]
+        region_owner = [None, None, None]
+        game_board = None
+
+        for player in clients:
+            player.has_selected = False
+            player.is_ready = False
+            
+            # reset position
+            player.y_pos = SCREEN_HEIGHT - 100
+            player.x_pos = int((SCREEN_WIDTH // 6) * (1 + 2 * player.player_id))
+
+    message = json.dumps({"TYPE": "RESET_ROUND"}) + "\n"
+    for player in clients:
+        player.client_socket.sendall(message.encode())
 
 def broadcast_winner(winner_player_id):
     '''
@@ -121,7 +181,7 @@ def broadcast_positions():
                                     "show_grid_outlines": show_grid_outlines,
                                     "region_revealed": region_revealed,
                                     "region_owner": region_owner,
-                                    "age": get_server_age()}) + "\n"
+                                    "remaining_time": max(0, ROUND_DURATION - int(time.time() - round_start_time)) if round_in_progress else None}) + "\n"
                 
             for player in clients:
                 try:
@@ -161,7 +221,7 @@ def handle_client(player: Player):
                         print(f"{player.client_address} has moved to: ({player.x_pos}, {player.y_pos})") # For debugging
                     
                     case "SELECT":
-                        if player.has_selected == False:                            
+                        if player.has_selected == False and game_board:                            
                             x = player.x_pos
                             y = player.y_pos
                             print(f"{player.client_address} has selected: ({x}, {y})")
@@ -176,10 +236,10 @@ def handle_client(player: Player):
                                     if not region_revealed[selected_region_id]:
                                         region_revealed[selected_region_id] = True
                                         region_owner[selected_region_id] = player.player_id
+                                        player.has_selected = True
                                         print(f"Region {selected_region_id} has been claimed by player {player.player_id}")
                                         check_winner()
 
-                                player.has_selected = True
                             else:
                                 print(f"[WARN] Player {player.player_id} attempted invalid selection at ({row_selected}, {col_selected})")                            
 
@@ -235,6 +295,10 @@ def start_server():
             
             new_player = Player(player_id, client_socket, client_address) # Store client socket/address info
             clients.append(new_player)
+
+            # Move new player into the correct spawn location
+            new_player.y_pos = SCREEN_HEIGHT - 100
+            new_player.x_pos = int((SCREEN_WIDTH // 6) * (1 + 2 * new_player.player_id))
 
             # Start a new thread for the client
             client_thread = threading.Thread(target=handle_client, args=(new_player,))
