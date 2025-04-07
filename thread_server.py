@@ -120,6 +120,7 @@ def broadcast_positions():
                                     "show_full_shapes": show_full_shapes,
                                     "show_grid_outlines": show_grid_outlines,
                                     "region_revealed": region_revealed,
+                                    "region_owner": region_owner,
                                     "age": get_server_age()}) + "\n"
                 
             for player in clients:

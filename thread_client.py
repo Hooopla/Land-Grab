@@ -44,6 +44,9 @@ show_full_shapes = False
 show_grid_outlines = False
 region_revealed = [False, False, False]
 
+# Track region ownership
+region_owner = [None, None, None]
+
 def send_data():
     while True:
         # Send Keyboard inputs
@@ -101,7 +104,7 @@ def send_data():
 
 def receive_data():
     
-    global buffer, player_data, server_age, game_board, show_outlines, show_full_shapes, show_grid_outlines, region_revealed
+    global buffer, player_data, server_age, game_board, show_outlines, show_full_shapes, show_grid_outlines, region_revealed, region_owner
 
     while True:
         try:
@@ -125,6 +128,7 @@ def receive_data():
                         show_full_shapes = dict_data["show_full_shapes"]
                         show_grid_outlines = dict_data["show_grid_outlines"]
                         region_revealed = dict_data["region_revealed"]
+                        region_owner = dict_data.get("region_owner", [None, None, None])
 
                     
                     case "START_ROUND":
@@ -220,7 +224,7 @@ if __name__ == "__main__":
             draw_text("Server is full, please try again later.", text_font, (255, 255, 255), screen.get_width() // 3, screen.get_height() // 2)
             pygame.display.update()  # Ensure the message is shown
             time.sleep(5)
-            break;
+            break
 
         # Poll for events
         for event in pygame.event.get():
