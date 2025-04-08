@@ -44,3 +44,20 @@ class Player():
         # Update Position
         self.x_pos += self.velocity.x
         self.y_pos += self.velocity.y
+
+        # Keep player within bounds
+        SCREEN_WIDTH = 1520
+        SCREEN_HEIGHT = 960
+        PLAYER_RADIUS = 25
+        
+        # x-axis bounds
+        if self.x_pos < 0 + PLAYER_RADIUS:
+            self.x_pos = 0 + PLAYER_RADIUS
+        elif self.x_pos > SCREEN_WIDTH - PLAYER_RADIUS:
+            self.x_pos = SCREEN_WIDTH - PLAYER_RADIUS
+        
+        # y-axis bounds
+        if self.y_pos < 0 + PLAYER_RADIUS:
+            self.y_pos = 0 + PLAYER_RADIUS
+        elif self.y_pos > SCREEN_HEIGHT - PLAYER_RADIUS:
+            self.y_pos = SCREEN_HEIGHT - PLAYER_RADIUS
