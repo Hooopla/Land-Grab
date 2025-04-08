@@ -316,6 +316,7 @@ if __name__ == "__main__":
         if winner_message:
             draw_grid_outlines(screen, ROWS, COLS, CELL_WIDTH, CELL_HEIGHT, BOARD_OFFSET_X, BOARD_OFFSET_Y, "white")
             draw_text(winner_message, text_font, (255,255,255), screen.get_width() // 3, screen.get_height() - 150)
+            display_ready = False
 
         pygame.display.update()
 
