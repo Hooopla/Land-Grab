@@ -80,6 +80,7 @@ def send_data():
                 data_dict = {"TYPE": "READY"}
                 data = json.dumps(data_dict) + "\n"
                 client.send(data.encode())
+
             except Exception as e:
                 print(f"Error sending data during ready: {e}")
                 break
@@ -304,7 +305,7 @@ if __name__ == "__main__":
                 if event.key == pygame.K_ESCAPE:
                     display_controls = not display_controls
                 elif event.key == pygame.K_p:
-                    display_ready = not display_ready
+                    display_ready = True
                 
         display_ready_ui()
         display_controls_ui()
