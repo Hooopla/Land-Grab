@@ -139,7 +139,7 @@ def broadcast_winner(winner_player_id):
         try:
             player.client_socket.sendall(message.encode())
         except Exception as e:
-            print(f"ERROR: Unable to send winner data to player {player.player_id}: {e}")
+            print(f"ERROR: Unable to send winner data to player {player.player_id + 1}: {e}")
 
 def check_winner():
     ''' 
@@ -159,7 +159,7 @@ def check_winner():
         winner_id = region_owner[winning_region]
         
         # Announce the winner
-        print(f"Player {winner_id} has won the round with {max_cells} cells!")  
+        print(f"Player {winner_id + 1} has won the round with {max_cells} cells!")  
         broadcast_winner(winner_id)
         
 

@@ -142,8 +142,8 @@ def receive_data():
                     
                     case "END_ROUND":
                         winner = dict_data["winner"]
-                        print(f"Round has ended. Winner: Player {winner}") # debug statements
-                        winner_message = f"Game Over! Player {winner} is the winner!"
+                        print(f"Round has ended. Winner: Player {winner + 1}") # debug statements
+                        winner_message = f"Game Over! Player {winner + 1} is the winner!"
 
                     case "RESET_ROUND":
                         print("Round is being reset...")
@@ -314,6 +314,7 @@ if __name__ == "__main__":
         
         # Display the winner message underneath the board
         if winner_message:
+            draw_grid_outlines(screen, ROWS, COLS, CELL_WIDTH, CELL_HEIGHT, BOARD_OFFSET_X, BOARD_OFFSET_Y, "white")
             draw_text(winner_message, text_font, (255,255,255), screen.get_width() // 3, screen.get_height() - 150)
 
         pygame.display.update()
