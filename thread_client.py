@@ -143,8 +143,10 @@ def receive_data():
                     
                     case "END_ROUND":
                         winner = dict_data["winner"]
-                        print(f"Round has ended. Winner: Player {winner + 1}") # debug statements
-                        winner_message = f"Game Over! Player {winner + 1} is the winner!"
+                        if winner != None:
+                            winner = winner + 1
+                        print(f"Round has ended. Winner: Player {winner}") # debug statements
+                        winner_message = f"Game Over! Player {winner} is the winner!"
 
                     case "RESET_ROUND":
                         print("Round is being reset...")

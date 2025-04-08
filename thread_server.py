@@ -124,7 +124,10 @@ def end_round():
 
     message = json.dumps({"TYPE": "RESET_ROUND"}) + "\n"
     for player in clients:
-        player.client_socket.sendall(message.encode())
+        try:
+            player.client_socket.sendall(message.encode())
+        except Exception as e:
+            print(f"Failed to send reset message to player {e}")
 
 def broadcast_winner(winner_player_id):
     '''
