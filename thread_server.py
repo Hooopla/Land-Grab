@@ -41,8 +41,6 @@ round_in_progress = False
 ROUND_DURATION = 10
 
 
-
-
 def print_server_capacity(current, capacity):
     print(f"Server Capacity: {current} / {capacity}")
     return
@@ -81,6 +79,7 @@ def round_timer_thread():
     ''' Thread to constantly keep track of how much time is left in the round. '''
     global round_in_progress
 
+    # While still time left in the round, check if everyone has selected early
     while time.time() - round_start_time < ROUND_DURATION:
         time.sleep(0.1)
         if all(p.has_selected for p in clients):
@@ -122,6 +121,7 @@ def end_round():
             player.y_pos = SCREEN_HEIGHT - 100
             player.x_pos = int((SCREEN_WIDTH // 6) * (1 + 2 * player.player_id))
 
+    # Inform the clients to reset the data
     message = json.dumps({"TYPE": "RESET_ROUND"}) + "\n"
     for player in clients:
         try:
@@ -130,9 +130,7 @@ def end_round():
             print(f"Failed to send reset message to player {e}")
 
 def broadcast_winner(winner_player_id):
-    '''
-    Sends an 'END_ROUND' packet to all clients announcing the winner of the round.
-    '''
+    ''' Sends an 'END_ROUND' packet to all clients announcing the winner of the round. '''
     message_dict = {
         "TYPE": "END_ROUND",
         "winner": winner_player_id
@@ -186,6 +184,7 @@ def broadcast_positions():
                                     "region_owner": region_owner,
                                     "remaining_time": max(0, ROUND_DURATION - int(time.time() - round_start_time)) if round_in_progress else None}) + "\n"
                 
+            # Send the update packet to all connected clients
             for player in clients:
                 try:
                     player.client_socket.sendall(message.encode())
@@ -195,35 +194,44 @@ def broadcast_positions():
         time.sleep(0.01) # Send updates every 0.01 seconds
 
 def handle_client(player: Player):
+    ''' Handles communication and actions for a connected client. '''
+    
     global show_full_shapes, show_grid_outlines, show_outlines, region_revealed
     buffer = " "
     try:
         print(f"{player.client_address} has joined the game.")
+        
+        # Send a welcome message
         welcome_message = json.dumps({"TYPE": "TEXT", "message": "Welcome to the server!"}) + "\n"
         player.client_socket.send(welcome_message.encode('utf-8'))
         print_server_capacity(len(clients), MAX_CLIENTS)
 
         while True:
+            # Recieve any incoming data
             data = player.client_socket.recv(1024).decode('utf-8')
             if not data:
-                # Disconnect
+                # Client Disconnect
                 print(f"{player.client_address} has left the game.")
                 clients.remove(player)
                 player.client_socket.close()
                 print_server_capacity(len(clients), MAX_CLIENTS)
                 break
+            
             buffer += data
             while "\n" in buffer:
-                #print(f"Received from {player.client_address}: {data}")
+                # Process a complete message
                 line, buffer = buffer.split("\n", 1)
                 data_dict = json.loads(line)
 
                 match data_dict["TYPE"]:
+                    
                     case "MOVE":
+                        # Update the player's position based on their input direction
                         player.update_position(data_dict['direction_x'], data_dict['direction_y'])
                         print(f"{player.client_address} has moved to: ({player.x_pos}, {player.y_pos})") # For debugging
                     
                     case "SELECT":
+                        # Handle the player's selection (includes checking bounds)
                         if player.has_selected == False and game_board:                            
                             x = player.x_pos
                             y = player.y_pos
@@ -247,11 +255,13 @@ def handle_client(player: Player):
                                 print(f"[WARN] Player {player.player_id} attempted invalid selection at ({row_selected}, {col_selected})")                            
 
                     case "READY":
+                        # Mark the player as ready
                         if player.is_ready == False:
                             player.is_ready = True
                             check_ready_status()
                     
                     case _:
+                        # Unknown message type recieved
                         print(f"[ERROR] Invalid packet type: {data_dict['TYPE']}")
 
 
@@ -262,6 +272,7 @@ def handle_client(player: Player):
         print(f"[ERROR] {player.client_address} disconnected unexpectedly.")
 
     finally:
+        # Clean up on disconnect
         clients.remove(player)
         available_player_ids.add(player.player_id)  # add id back to available ids
         player.client_socket.close()
@@ -275,17 +286,19 @@ def physics_loop():
         time.sleep(1/60)
 
 def start_server():
+    ''' Starts server, accepts clients, and starts threads. '''
     
+    # Create the server
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((HOST_IP, PORT))
     server.listen(MAX_CLIENTS)
     print(f"Server is up on {HOST_IP}:{PORT}")  # Debugging Purposes
 
-    # Start the broadcasting thread
+    # Start the broadcasting thread to send game updates to all clients
     broadcast_thread = threading.Thread(target=broadcast_positions, daemon=True)
     broadcast_thread.start()
 
-    # Thread to continously run physics. # TODO doesn't really work currently
+    # Thread to continously run physics
     physics_thread = threading.Thread(target=physics_loop, daemon=True)
     physics_thread.start()
 
@@ -293,9 +306,11 @@ def start_server():
         if len(clients) < MAX_CLIENTS:
             client_socket, client_address = server.accept()
             
-            player_id = min(available_player_ids)   # get the smallest available id
-            available_player_ids.remove(player_id)  # mark the id as used
+            # Assign the smallest available player ID
+            player_id = min(available_player_ids)
+            available_player_ids.remove(player_id) 
             
+            # Create the new player object and add it to the list of clients
             new_player = Player(player_id, client_socket, client_address) # Store client socket/address info
             clients.append(new_player)
 
@@ -308,6 +323,7 @@ def start_server():
             client_thread.start()
 
         else:
+            # If the server is full, notify the client and end the connection
             client_socket, client_address = server.accept()
             server_full_message = json.dumps({"TYPE": "FULL_SERVER", "message": "Server is full please try again later."}) + "\n"
             client_socket.send(server_full_message.encode('utf-8'))

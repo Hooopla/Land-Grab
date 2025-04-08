@@ -53,6 +53,7 @@ region_owner = [None, None, None]
 winner_message = ""
 
 def send_data():
+    ''' Countinously handles inputs and sends data to the server when needed. '''
     while True:
         # Send Keyboard inputs
         keys = pygame.key.get_pressed()
@@ -66,6 +67,7 @@ def send_data():
         if keys[pygame.K_d]:
             direction.x += 1
 
+        # Send a "select" packet to the server
         if keys[pygame.K_SPACE] and game_board:
             try:
                 data_dict = {"TYPE": "SELECT"}
@@ -74,17 +76,18 @@ def send_data():
             except Exception as e:
                 print(f"Error sending SELECT: {e}")
 
-
-        if keys[pygame.K_p]:       # "READY"
+        # Send a "ready" packet to the server
+        if keys[pygame.K_p]:
             try:
                 data_dict = {"TYPE": "READY"}
                 data = json.dumps(data_dict) + "\n"
                 client.send(data.encode())
-
             except Exception as e:
                 print(f"Error sending data during ready: {e}")
                 break
-        # If input is being recieved
+        
+
+        # If input is being recieved, notify the server
         if direction.length() > 0:
             direction = direction.normalize()
 
@@ -105,23 +108,31 @@ def send_data():
 
 
 def receive_data():
+    ''' Continuously receives and processes data from the server. '''
     
-    global buffer, player_data, remaining_time, game_board, show_outlines, show_full_shapes, show_grid_outlines, region_revealed, region_owner, winner_message
+    global buffer, player_data, remaining_time, game_board, show_outlines
+    global show_full_shapes, show_grid_outlines, region_revealed, region_owner, winner_message
+    
+    
     while True:
         try:
             # Stores recieved data in a buffer, ensures that if 2 messages come "combined," they are parsed correctly
             buffer += client.recv(1024).decode('utf-8')
+            
+            # Process all complete messages (messages that end in a newline)
             while "\n" in buffer:
                 message, buffer = buffer.split("\n", 1) # extract 1 full message
                 dict_data = json.loads(message)
 
-                # Based on the "TYPE", handle the data accordingly
+                # Handle message based on its TYPE field
                 match dict_data["TYPE"]:
                     
                     case "TEXT":
+                        # Simple text from the server (for printing to client console)
                         print(f"Server: {dict_data['message']}")
                     
                     case "UPDATE":
+                        # Game state update from the server
                         with data_lock: # Prevents race conditions
                             player_data = dict_data # Store the latest info globally (for draw_players)
                         remaining_time = dict_data["remaining_time"]
@@ -133,15 +144,18 @@ def receive_data():
 
                     
                     case "START_ROUND":
+                        # New game board recieved from the server
                         game_board = dict_data["game_board"]
                         print(f"Recieved game board from server: {game_board}")
                         
                     case "FULL_SERVER":
+                        # Server is full, cannot join
                         print(f"Server is currently full please try again later.")
                         global server_full
                         server_full = True
                     
                     case "END_ROUND":
+                        # Round has ended, winner announced
                         winner = dict_data["winner"]
                         if winner != None:
                             winner = winner + 1
@@ -152,11 +166,13 @@ def receive_data():
                             winner_message = "Not everyone selected! No winner decided."
 
                     case "RESET_ROUND":
+                        # Reset board/winner message in preperation for the new round
                         print("Round is being reset...")
                         game_board = None
                         winner_message = None
 
                     case _:
+                        # Unknown message type recieved
                         print(f"Invalid type: {dict_data['TYPE']}")
                 
         except Exception as e:
@@ -164,7 +180,7 @@ def receive_data():
             break
 
 def start_client():
-
+    ''' Starts the client and any threads needed. '''
     try:
         client.connect((SERVER_IP, SERVER_PORT))
 
@@ -203,6 +219,7 @@ def draw_players():
 
 
 def draw_board():
+    ''' Draws the game board and any outlines if enabled. '''
     global game_board
 
     if game_board:
@@ -218,10 +235,12 @@ def draw_board():
 
 
 def draw_text(text, font, colour, x, y):
+    ''' Helper function to draw any text to the screen. '''
     img = font.render(text, True, colour)
     screen.blit(img, (x, y))
 
 def display_controls_ui():
+    ''' Logic to draw the controls text to the screen. '''
     global display_controls
     if display_controls:
         lines = [
@@ -246,6 +265,7 @@ def display_controls_ui():
     x = screen.get_width() - margin_right
     y = margin_top
 
+    # Draw the text to the screen
     for line in lines:
         text_surface = text_font.render(line, True, (255, 255, 255))
         text_width = text_surface.get_width()
@@ -253,6 +273,7 @@ def display_controls_ui():
         y += text_surface.get_height() + 5
 
 def display_ready_ui():
+    ''' Logic to draw the ready/not ready text to the screen. '''
     global display_ready
 
     # Colors for ready and not ready
@@ -281,6 +302,7 @@ def display_ready_ui():
     x = margin_left
     y = screen.get_height() - margin_bottom - total_height
 
+    # Draw the actual text to the screen
     for line in lines:
         text_surface = text_font.render(line, True, text_color)
         draw_text(line, text_font, text_color, x, y)
@@ -290,7 +312,7 @@ def display_ready_ui():
 if __name__ == "__main__":
     start_client()
 
-    # Pygame display loop (make its own function?)
+    # Pygame display loop
     while running:
 
         screen.fill("black") # clear the screen
@@ -311,7 +333,8 @@ if __name__ == "__main__":
                     display_controls = not display_controls
                 elif event.key == pygame.K_p:
                     display_ready = True
-                
+        
+        # Call all draw functions
         display_ready_ui()
         display_controls_ui()
         draw_board()
