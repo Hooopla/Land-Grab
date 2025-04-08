@@ -145,8 +145,11 @@ def receive_data():
                         winner = dict_data["winner"]
                         if winner != None:
                             winner = winner + 1
-                        print(f"Round has ended. Winner: Player {winner}") # debug statements
-                        winner_message = f"Game Over! Player {winner} is the winner!"
+                            print(f"Round has ended. Winner: Player {winner}") # debug statements
+                            winner_message = f"Game Over! Player {winner} is the winner!"
+                        else:
+                            print("Not everyone selected, so no winner has been declared!") # debug statement
+                            winner_message = "Not everyone selected! No winner decided."
 
                     case "RESET_ROUND":
                         print("Round is being reset...")
