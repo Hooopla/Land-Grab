@@ -236,6 +236,8 @@ def draw_board():
 
 def draw_text(text, font, colour, x, y):
     ''' Helper function to draw any text to the screen. '''
+    if text == "None":
+        text = ""
     img = font.render(text, True, colour)
     screen.blit(img, (x, y))
 
