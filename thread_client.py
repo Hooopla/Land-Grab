@@ -213,9 +213,17 @@ test_packet = {
 def draw_players():
     ''' Draws all the players on the screen, based on the list of player coordinates. '''
 
-    with data_lock: # To prevent 2 threads from accessing the same info at the same time
+    with data_lock:  # To prevent 2 threads from accessing the same info at the same time
         for player in player_data["players"]:
-            pygame.draw.circle(screen, PLAYER_COLOURS[player["id"] % len(PLAYER_COLOURS)], (player["x"], player["y"]), 25)
+            color = PLAYER_COLOURS[player["id"] % len(PLAYER_COLOURS)]
+            pos = (player["x"], player["y"])
+            radius = 25
+            outline_width = 5  # Adjust thickness of border as needed
+
+            # Draw gray outline
+            pygame.draw.circle(screen, (128, 128, 128), pos, radius + outline_width)
+            # Draw player circle
+            pygame.draw.circle(screen, color, pos, radius)
 
 
 def draw_board():
