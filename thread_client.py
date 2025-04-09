@@ -28,6 +28,7 @@ player_data = {"players": []}
 data_lock = threading.Lock()    # To prevent 2 threads from accessing the same data and corrupting it
 remaining_time = 0
 server_full = False
+server_offline = False
 display_controls = False
 display_ready = False
 
@@ -197,6 +198,8 @@ def start_client():
 
     except ConnectionRefusedError:
         print("Unable to connect to the server. Make sure the server is running.")
+        global server_offline 
+        server_offline = True
     except KeyboardInterrupt:
         print("Client shutting down.")
 
@@ -329,9 +332,38 @@ if __name__ == "__main__":
 
         # If the server is full, display the full message and exit
         if server_full:
-            draw_text("Server is full, please try again later.", text_font, (255, 255, 255), screen.get_width() // 3, screen.get_height() // 2)
+            full_server_msg = "Server is currently full, please try again later."
+            close_msg = "This tab will close momentarily"
+            # Get rendered surfaces
+            msg1_surface = text_font.render(full_server_msg, True, (255, 255, 255))
+
+            # Get X and Y for first message
+            x = screen.get_width() // 3
+            y = screen.get_height() // 2
+
+            # Draw both messages, stacked
+            draw_text(full_server_msg, text_font, (255, 255, 255), x, y)
+            draw_text(close_msg, text_font, (255, 255, 255), x, y + msg1_surface.get_height() + 10)  # 10 pixels spacing
             pygame.display.update()  # Ensure the message is shown
-            time.sleep(5)
+            time.sleep(3)
+            break
+
+        # If server is not online 
+        if server_offline: 
+            no_available_server_msg = "No available server, please try again later."
+            close_msg = "This tab will close momentarily"
+            # Get rendered surfaces
+            msg1_surface = text_font.render(no_available_server_msg, True, (255, 255, 255))
+
+            # Get X and Y for first message
+            x = screen.get_width() // 3
+            y = screen.get_height() // 2
+
+            # Draw both messages, stacked
+            draw_text(no_available_server_msg, text_font, (255, 255, 255), x, y)
+            draw_text(close_msg, text_font, (255, 255, 255), x, y + msg1_surface.get_height() + 10)  # 10 pixels spacing
+            pygame.display.update()  # Ensure the message is shown
+            time.sleep(3)
             break
 
         # Poll for events
