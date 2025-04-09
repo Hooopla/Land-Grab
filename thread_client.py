@@ -354,9 +354,20 @@ if __name__ == "__main__":
         # Display the winner message underneath the board
         if winner_message:
             draw_grid_outlines(screen, ROWS, COLS, CELL_WIDTH, CELL_HEIGHT, BOARD_OFFSET_X, BOARD_OFFSET_Y, "white")
-            draw_text(winner_message, text_font, (255,255,255), screen.get_width() // 3, screen.get_height() - 150)
-            display_ready = False
 
+            # Default to white color
+            winner_color = (255, 255, 255)
+
+            # Try to extract winner index from the message
+            if "Player" in winner_message:
+                try:
+                    winner_num = int(winner_message.split("Player")[1].split()[0]) - 1  # subtract one due to indexing.
+                    winner_color = pygame.Color(PLAYER_COLOURS[winner_num % len(PLAYER_COLOURS)])
+                except Exception as e:
+                    print(f"Failed to extract winner color: {e}") # For debug purposes
+
+            draw_text(winner_message, text_font, winner_color, screen.get_width() // 3, screen.get_height() - 150)
+            display_ready = False
         pygame.display.update()
 
     client.close()
