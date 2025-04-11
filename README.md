@@ -1,5 +1,4 @@
-# Land-Grab
-[![Watch the Demo](./logo.png](https://www.youtube.com/watch?v=enUUbIkUhHw)
+[![Watch the Demo](./logo.png)](https://www.youtube.com/watch?v=enUUbIkUhHw)
 
 
 [Watch the demo](https://www.youtube.com/watch?v=enUUbIkUhHw)
