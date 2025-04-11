@@ -7,9 +7,7 @@
 [Watch the demo](https://www.youtube.com/watch?v=enUUbIkUhHw)
 
 ## Game Description
-Land Grab is a **3 player** grid based game where players will have to compete against one another by claiming the region with the most cells. Each game, the gameboard is randomized and divided into three distinct regions, each with a different amount of cells. Once the round starts, players must rush to choose a region to claim. Once a region is claimed, it becomes locked, which then prevents other players from selecting it. When everyone has made their selection or time runs out the game will then choose the winner by selecting the player with the largest region. 
-
-⚠️ NOTE: If one or more players do not choose a region in time, the round will reset! ⚠️ 
+Land Grab is a grid based game where a total of 3 players will have to beat one another by claiming the largest region with the most cells. Each game, the gameboard is randomized and divided into three distinct regions, each with a different amount of cells. Once the round starts, players must rush to choose a region to claim. Once a region is claimed, it becomes locked, which then prevents other players from selecting it. When everyone has made their selection the game will then choose the winner by selecting the player with the largest region. If one or more players do not choose a region in time, the round will reset with no winner!
 
 ## Technology Stack
 This Project was developed using the following technologies!
