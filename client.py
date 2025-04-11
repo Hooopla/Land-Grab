@@ -28,6 +28,7 @@ player_data = {"players": []}
 data_lock = threading.Lock()    # To prevent 2 threads from accessing the same data and corrupting it
 remaining_time = 0
 server_full = False
+server_offline = False
 display_controls = False
 display_ready = False
 
@@ -87,7 +88,7 @@ def send_data():
                 break
         
 
-        # If input is being recieved, notify the server
+        # If input is being received, notify the server
         if direction.length() > 0:
             direction = direction.normalize()
 
@@ -116,7 +117,7 @@ def receive_data():
     
     while True:
         try:
-            # Stores recieved data in a buffer, ensures that if 2 messages come "combined," they are parsed correctly
+            # Stores received data in a buffer, ensures that if 2 messages come "combined," they are parsed correctly
             buffer += client.recv(1024).decode('utf-8')
             
             # Process all complete messages (messages that end in a newline)
@@ -144,9 +145,9 @@ def receive_data():
 
                     
                     case "START_ROUND":
-                        # New game board recieved from the server
+                        # New game board received from the server
                         game_board = dict_data["game_board"]
-                        print(f"Recieved game board from server: {game_board}")
+                        print(f"Received game board from server: {game_board}")
                         
                     case "FULL_SERVER":
                         # Server is full, cannot join
@@ -172,7 +173,7 @@ def receive_data():
                         winner_message = None
 
                     case _:
-                        # Unknown message type recieved
+                        # Unknown message type received
                         print(f"Invalid type: {dict_data['TYPE']}")
                 
         except Exception as e:
@@ -197,6 +198,8 @@ def start_client():
 
     except ConnectionRefusedError:
         print("Unable to connect to the server. Make sure the server is running.")
+        global server_offline 
+        server_offline = True
     except KeyboardInterrupt:
         print("Client shutting down.")
 
@@ -213,9 +216,17 @@ test_packet = {
 def draw_players():
     ''' Draws all the players on the screen, based on the list of player coordinates. '''
 
-    with data_lock: # To prevent 2 threads from accessing the same info at the same time
+    with data_lock:  # To prevent 2 threads from accessing the same info at the same time
         for player in player_data["players"]:
-            pygame.draw.circle(screen, PLAYER_COLOURS[player["id"] % len(PLAYER_COLOURS)], (player["x"], player["y"]), 25)
+            color = PLAYER_COLOURS[player["id"] % len(PLAYER_COLOURS)]
+            pos = (player["x"], player["y"])
+            radius = 25
+            outline_width = 5  # Adjust thickness of border as needed
+
+            # Draw gray outline
+            pygame.draw.circle(screen, (128, 128, 128), pos, radius + outline_width)
+            # Draw player circle
+            pygame.draw.circle(screen, color, pos, radius)
 
 
 def draw_board():
@@ -236,6 +247,8 @@ def draw_board():
 
 def draw_text(text, font, colour, x, y):
     ''' Helper function to draw any text to the screen. '''
+    if text == "None":
+        text = ""
     img = font.render(text, True, colour)
     screen.blit(img, (x, y))
 
@@ -319,9 +332,38 @@ if __name__ == "__main__":
 
         # If the server is full, display the full message and exit
         if server_full:
-            draw_text("Server is full, please try again later.", text_font, (255, 255, 255), screen.get_width() // 3, screen.get_height() // 2)
+            full_server_msg = "Server is currently full, please try again later."
+            close_msg = "This tab will close momentarily"
+            # Get rendered surfaces
+            msg1_surface = text_font.render(full_server_msg, True, (255, 255, 255))
+
+            # Get X and Y for first message
+            x = screen.get_width() // 3
+            y = screen.get_height() // 2
+
+            # Draw both messages, stacked
+            draw_text(full_server_msg, text_font, (255, 255, 255), x, y)
+            draw_text(close_msg, text_font, (255, 255, 255), x, y + msg1_surface.get_height() + 10)  # 10 pixels spacing
             pygame.display.update()  # Ensure the message is shown
-            time.sleep(5)
+            time.sleep(3)
+            break
+
+        # If server is not online 
+        if server_offline: 
+            no_available_server_msg = "No available server, please try again later."
+            close_msg = "This tab will close momentarily"
+            # Get rendered surfaces
+            msg1_surface = text_font.render(no_available_server_msg, True, (255, 255, 255))
+
+            # Get X and Y for first message
+            x = screen.get_width() // 3
+            y = screen.get_height() // 2
+
+            # Draw both messages, stacked
+            draw_text(no_available_server_msg, text_font, (255, 255, 255), x, y)
+            draw_text(close_msg, text_font, (255, 255, 255), x, y + msg1_surface.get_height() + 10)  # 10 pixels spacing
+            pygame.display.update()  # Ensure the message is shown
+            time.sleep(3)
             break
 
         # Poll for events
@@ -344,9 +386,20 @@ if __name__ == "__main__":
         # Display the winner message underneath the board
         if winner_message:
             draw_grid_outlines(screen, ROWS, COLS, CELL_WIDTH, CELL_HEIGHT, BOARD_OFFSET_X, BOARD_OFFSET_Y, "white")
-            draw_text(winner_message, text_font, (255,255,255), screen.get_width() // 3, screen.get_height() - 150)
-            display_ready = False
 
+            # Default to white color
+            winner_color = (255, 255, 255)
+
+            # Try to extract winner index from the message
+            if "Player" in winner_message:
+                try:
+                    winner_num = int(winner_message.split("Player")[1].split()[0]) - 1  # subtract one due to indexing.
+                    winner_color = pygame.Color(PLAYER_COLOURS[winner_num % len(PLAYER_COLOURS)])
+                except Exception as e:
+                    print(f"Failed to extract winner color: {e}") # For debug purposes
+
+            draw_text(winner_message, text_font, winner_color, screen.get_width() // 3, screen.get_height() - 150)
+            display_ready = False
         pygame.display.update()
 
     client.close()

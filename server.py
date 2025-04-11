@@ -273,8 +273,11 @@ def handle_client(player: Player):
 
     finally:
         # Clean up on disconnect
-        clients.remove(player)
-        available_player_ids.add(player.player_id)  # add id back to available ids
+        with data_lock:
+            # If the player is in the game, remove them from the game
+            if player in clients:
+                clients.remove(player)
+            available_player_ids.add(player.player_id)  # add id back to available ids
         player.client_socket.close()
         print_server_capacity(len(clients), MAX_CLIENTS)
 
@@ -303,32 +306,35 @@ def start_server():
     physics_thread.start()
 
     while True:
-        if len(clients) < MAX_CLIENTS:
-            client_socket, client_address = server.accept()
-            
-            # Assign the smallest available player ID
-            player_id = min(available_player_ids)
-            available_player_ids.remove(player_id) 
-            
-            # Create the new player object and add it to the list of clients
-            new_player = Player(player_id, client_socket, client_address) # Store client socket/address info
-            clients.append(new_player)
+        # Accept new connections
+        client_socket, client_address = server.accept()
+        with data_lock:
+            # Check if the server is full AND if available player IDs exist (i.e. There is room for a new player)
+            if len(clients) < MAX_CLIENTS and available_player_ids:
+                
+                # Assign the smallest available player ID
+                player_id = min(available_player_ids)
+                available_player_ids.remove(player_id) 
+                
+                # Create the new player object and add it to the list of clients
+                new_player = Player(player_id, client_socket, client_address) # Store client socket/address info
+                clients.append(new_player)
 
-            # Move new player into the correct spawn location
-            new_player.y_pos = SCREEN_HEIGHT - 100
-            new_player.x_pos = int((SCREEN_WIDTH // 6) * (1 + 2 * new_player.player_id))
+                # Move new player into the correct spawn location
+                new_player.y_pos = SCREEN_HEIGHT - 100
+                new_player.x_pos = int((SCREEN_WIDTH // 6) * (1 + 2 * new_player.player_id))
 
-            # Start a new thread for the client
-            client_thread = threading.Thread(target=handle_client, args=(new_player,))
-            client_thread.start()
+                # Start a new thread for the client
+                client_thread = threading.Thread(target=handle_client, args=(new_player,))
+                client_thread.start()
 
-        else:
-            # If the server is full, notify the client and end the connection
-            client_socket, client_address = server.accept()
-            server_full_message = json.dumps({"TYPE": "FULL_SERVER", "message": "Server is full please try again later."}) + "\n"
-            client_socket.send(server_full_message.encode('utf-8'))
-            print(f"Connection from {client_address} is declined because server is currently full.")
-            client_socket.close()
+            else:
+                # If the server is full, notify the client and end the connection
+                client_socket, client_address = server.accept()
+                server_full_message = json.dumps({"TYPE": "FULL_SERVER", "message": "Server is full please try again later."}) + "\n"
+                client_socket.send(server_full_message.encode('utf-8'))
+                print(f"Connection from {client_address} is declined because server is currently full.")
+                client_socket.close()
 
 if __name__ == "__main__":
     start_server()
