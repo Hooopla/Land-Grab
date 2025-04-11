@@ -88,7 +88,7 @@ def send_data():
                 break
         
 
-        # If input is being recieved, notify the server
+        # If input is being received, notify the server
         if direction.length() > 0:
             direction = direction.normalize()
 
@@ -117,7 +117,7 @@ def receive_data():
     
     while True:
         try:
-            # Stores recieved data in a buffer, ensures that if 2 messages come "combined," they are parsed correctly
+            # Stores received data in a buffer, ensures that if 2 messages come "combined," they are parsed correctly
             buffer += client.recv(1024).decode('utf-8')
             
             # Process all complete messages (messages that end in a newline)
@@ -145,9 +145,9 @@ def receive_data():
 
                     
                     case "START_ROUND":
-                        # New game board recieved from the server
+                        # New game board received from the server
                         game_board = dict_data["game_board"]
-                        print(f"Recieved game board from server: {game_board}")
+                        print(f"Received game board from server: {game_board}")
                         
                     case "FULL_SERVER":
                         # Server is full, cannot join
@@ -173,7 +173,7 @@ def receive_data():
                         winner_message = None
 
                     case _:
-                        # Unknown message type recieved
+                        # Unknown message type received
                         print(f"Invalid type: {dict_data['TYPE']}")
                 
         except Exception as e:
