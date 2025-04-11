@@ -1,5 +1,8 @@
-[![Watch the Demo](./logo.png)](https://www.youtube.com/watch?v=enUUbIkUhHw)
-
+<div align="center">
+    <a href="https://www.youtube.com/watch?v=enUUbIkUhHw">
+      <img src="./logo.png" alt="Watch the Demo" width="500"/>
+    </a>
+</div>
 
 [Watch the demo](https://www.youtube.com/watch?v=enUUbIkUhHw)
 
